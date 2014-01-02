@@ -9,6 +9,18 @@ Simplicity over complexity.
 '''
 
 
+class InterpreterError(Exception):
+    pass
+
+
+class TokenizerError(InterpreterError):
+    pass
+
+
+class ParserError(InterpreterError):
+    pass
+
+
 def tokenize(code):
     '''
     Convert s-expr string to a list of tokens.
@@ -16,9 +28,42 @@ def tokenize(code):
 
     returns list of strings
     '''
-    # Generalize the input
-    code = code.replace('(', ' ( ').replace(')', ' ) ')
-    return code.split()
+    EOF = None  # Indicates end of file.
+    # Indicates the index where current word starts. None if the cursor is not
+    # over a word. (List to hack Python not having truely lexical scope):
+    word_start_index = [None]
+    len_plus_eof = len(code) + 1  # Length of the code plus pseudo-EOF.
+    tokens = []
+
+    def append_word_if_word():
+        if word_start_index[0] is not None:
+            token = code[word_start_index[0]:index]
+            # Validate the token:
+            # Valid types are Python's float, int, str, unicode. Those types
+            # are managed by Python's runtime.
+            atom = eval(repr(token), {})
+            if not isinstance(atom, (float, int, str, unicode)):
+                raise TokenizerError(
+                    'Token %s is %s. Must be float, int, str or unicode.' %
+                    (token, type(token)))
+            tokens.append(token)
+            word_start_index[0] = None
+
+    for index in range(len_plus_eof):
+        char = code[index] if index + 1 < len_plus_eof else EOF
+
+        if char in [' ', '\t', EOF]:  # Whitespace
+            append_word_if_word()
+        elif char == '(' or char == ')':  # Parenthesis
+            append_word_if_word()
+            tokens.append(char)
+        else:  # Symbol or literal
+            if word_start_index[0] is None:
+                # We're at the beginning of a word. Mark it:
+                word_start_index[0] = index
+
+    return tokens
+
 
 def parse(tokens):
     '''
@@ -44,4 +89,3 @@ def parse(tokens):
     if tokens[0] != '(':
         raise RuntimeError('S-expression is not opened.')
     return do_parse(tokens[1:])[0]
-
