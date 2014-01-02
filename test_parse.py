@@ -3,7 +3,8 @@ import pytest
 from parse import tokenize, parse
 
 
-@pytest.mark.parametrize('input, expected_result',
+@pytest.mark.parametrize(
+    'input, expected_result',
     [
         ('', []),
 
@@ -28,7 +29,7 @@ from parse import tokenize, parse
         ),
         (
             '(make (me a) tuple)',
-            ['(', 'make', '(', 'me', 'a', ')','tuple', ')']
+            ['(', 'make', '(', 'me', 'a', ')', 'tuple', ')']
         ),
 
         # Invalid S-expressions:
@@ -46,7 +47,8 @@ def test_tokenize(input, expected_result):
     assert expected_result == tokenize(input)
 
 
-@pytest.mark.parametrize('input, expected_result',
+@pytest.mark.parametrize(
+    'input, expected_result',
     [
         (['(', ')'], []),
         (['(', '(', ')', ')'], [[]]),
@@ -60,7 +62,8 @@ def test_parse(input, expected_result):
     assert expected_result == parse(input)
 
 
-@pytest.mark.parametrize('input',
+@pytest.mark.parametrize(
+    'input',
     [
         (['(']),
         ([')'], []),
@@ -74,6 +77,3 @@ def test_parse(input, expected_result):
 def test_parse_raises(input):
     with pytest.raises(RuntimeError):
         parse(input)
-
-
-
